@@ -8,7 +8,10 @@ This can be used to select a fee that will get a profit-optimizing miner to incl
 # Requirements
 
 Python pyplot
+
 Python numpy
+
+Tested with Python 2.7.6
 
 # Demo
 
