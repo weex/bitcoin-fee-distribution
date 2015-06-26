@@ -31,6 +31,8 @@ import sys
 import optparse
 import urllib, json
 import numpy
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 from pprint import pprint
 from operator import itemgetter
@@ -169,11 +171,11 @@ b = []
 f = []
 
 fo = open("bitcoin-fee-distribution.csv", "w")
-fo.write('Unconfirmed Fee Distribution\n('+strftime("%a %d %b %Y %H:%M:%S", gmtime())+' UTC)\nmBTC/KB,KB')
+fo.write('Unconfirmed Fee Distribution\n('+strftime("%a %d %b %Y %H:%M:%S", gmtime())+' UTC)\nmBTC/KB,KB\n')
 for i in sorted(bytesbyfee, reverse=True):
 	b.append(bytesbyfee[i]/1000.0)
 	f.append(i)
-	fo.write(str(i) + "," + str(bytesbyfee[i]/1000.0))
+	fo.write(str(i) + "," + str(bytesbyfee[i]/1000.0) + "\n")
 fo.close()
 
 print "Total bytes: " + str(bytessofar)
