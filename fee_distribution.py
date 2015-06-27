@@ -37,6 +37,7 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 from operator import itemgetter
 from time import gmtime, strftime
+import daemon
 
 parser = optparse.OptionParser(usage="%prog [options]")
 parser.add_option("--unconf", dest="unconf", default=True,
@@ -70,11 +71,12 @@ def get_fee_stats( data ):
 
 if options.unconf:
 	raw = ''
+	txs = []
+	data = {}
 	if options.provider == 'blockchain':
 		if options.unconf:
 			url = "https://blockchain.info/unconfirmed-transactions?format=json&offset="
 			
-		txs = []
 		response = urllib.urlopen("https://blockchain.info/q/unconfirmedcount")
 		unconf_count = int(response.read())
 		print "Getting " + str(unconf_count) + " unconfirmed transactions."
@@ -89,64 +91,99 @@ if options.unconf:
 				
 		height = "unconf" 
 		block_hash = "unconf"
-		data = {}
 		data[u'tx'] = txs
-				
+
+	elif options.provider == 'bitcoind':
+		d = daemon.Daemon()
+		raw = d.get_rawmempool()
+		#txs = json.loads(raw)
+		data[u'tx'] = raw 
+		
+		# u'6d2b502eea0f8575d84eba792d811f5bb80dbeb92083111a4a8a5f500d75b788': 
+		# {
+		#  u'fee': 0.0001, 
+		#  u'startingpriority': 8459910.32051282, 
+		#  u'height': 362735, 
+		#  u'depends': [], 
+		#  u'time': 1435380798, 
+		#  u'currentpriority': 8459910.32051282, 
+		#  u'size': 226
+		# }				
+
+
 total_tx = 0
 has_fee = 0
 prev_out_txindex = []
-for tx in data[u'tx']:
-	total_value = 0
-	num_out = 0
-	max_value = 0
+if options.provider == 'blockchain':
+	for tx in data[u'tx']:
+		total_value = 0
+		num_out = 0
+		max_value = 0
 
-	total_in_value = 0
-	num_in = 0
-	max_in_value = 0
-	for output in tx[u'out']:
-		total_value = total_value + output[u'value']
-		if output[u'value'] > max_value:
-			max_value = output[u'value']
-		num_out = num_out + 1 
+		total_in_value = 0
+		num_in = 0
+		max_in_value = 0
+		for output in tx[u'out']:
+			total_value = total_value + output[u'value']
+			if output[u'value'] > max_value:
+				max_value = output[u'value']
+			num_out = num_out + 1 
 
-	for prev in tx[u'inputs']:
-		if 'prev_out' in prev:
-			prev_out_txindex.append(prev['prev_out']['tx_index'])
-			in_value = prev['prev_out']['value']
-			total_in_value = total_in_value + in_value
-			if in_value > max_in_value:
-				max_in_value = in_value
-			num_in = num_in + 1 
+		for prev in tx[u'inputs']:
+			if 'prev_out' in prev:
+				prev_out_txindex.append(prev['prev_out']['tx_index'])
+				in_value = prev['prev_out']['value']
+				total_in_value = total_in_value + in_value
+				if in_value > max_in_value:
+					max_in_value = in_value
+				num_in = num_in + 1 
 
-	fee = total_in_value - total_value
-	if fee > 0:
-		has_fee += 1
+		fee = total_in_value - total_value
+		if fee > 0:
+			has_fee += 1
+	
+		if num_in > 0:
+			fees.append(fee)
+			size = tx['size']/1000.0
+			if size < 1.0:
+				size = 1.0
+			feesperkb.append([fee/size/100000.0,tx['size']])
+	
+		total_tx += 1
+	
+		if num_out in num_outs.keys():
+			num_outs[num_out] = num_outs[num_out] + 1 
+		else:
+			num_outs[num_out] = 1
+	
+		if num_in in num_ins.keys():
+			num_ins[num_in] = num_ins[num_in] + 1 
+		else:
+			num_ins[num_in] = 1
 
-	if num_in > 0:
+elif options.provider == 'bitcoind':
+	for txid in data[u'tx']:
+		tx = data[u'tx'][txid]
+		total_value = 0
+		num_out = 0
+		max_value = 0
+
+		total_in_value = 0
+		num_in = 0
+		max_in_value = 0
+
+		fee = tx[u'fee']*100000000.0
+		if fee > 0:
+			has_fee += 1
+	
 		fees.append(fee)
 		size = tx['size']/1000.0
 		if size < 1.0:
 			size = 1.0
 		feesperkb.append([fee/size/100000.0,tx['size']])
-
-	total_tx += 1
-
-	if num_out in num_outs.keys():
-		num_outs[num_out] = num_outs[num_out] + 1 
-	else:
-		num_outs[num_out] = 1
-
-	if num_in in num_ins.keys():
-		num_ins[num_in] = num_ins[num_in] + 1 
-	else:
-		num_ins[num_in] = 1
-
-
-for tx in data[u'tx']:	
-	tx['respends'] = 0
-	if tx['tx_index'] in prev_out_txindex:
-		tx['respends'] += 1
-		
+	
+		total_tx += 1
+	
  
 print "Total transactions: " + str(total_tx) + " No fee: " + str(total_tx - has_fee)
 
@@ -185,7 +222,7 @@ y = numpy.array(b)
 plt.plot(x, y, c='blue')
 plt.xticks(numpy.arange(min(x), max(x), 0.1))
 plt.xlim(0, 1.0)
-plt.title('Unconfirmed Fee Distribution\n('+strftime("%a %d %b %Y %H:%M:%S", gmtime())+' UTC)')
+plt.title('Unconfirmed Fee Distribution\n'+strftime("%a %d %b %Y %H:%M:%S", gmtime())+' UTC')
 plt.ylabel('Transactions (KB)')
 plt.xlabel('Fee threshold (mBTC per KB)')
 plt.savefig('bitcoin-fee-distribution.png')

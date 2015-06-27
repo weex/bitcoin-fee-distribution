@@ -59,3 +59,6 @@ target/
 # Output
 *.csv
 *.png
+
+# Configuration
+settings.py
