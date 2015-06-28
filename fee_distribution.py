@@ -62,11 +62,12 @@ def get_stats( data ):
 def get_fee_stats( data ):
 	if len(data) > 0:
 		arr = numpy.array( data )
-		print "Number of transactions: " + str(len(data))
-		print "Minimum fee: " + str(numpy.min(arr)/100000000.0)
-		print "Average fee for payers: " + str(numpy.mean(arr)/100000000.0)
-		print "Median fee for payers: " + str(numpy.median(arr)/100000000.0)
-		print "Stdev of fee for payers: " + str(numpy.std(arr)/100000000.0)
+		print "All fees in mBTC"
+		print "Minimum fee: " + str(numpy.min(arr)/100000.0)
+		print "Maximum fee: " + str(numpy.max(arr)/100000.0)
+		print "Average fee for payers: " + str(numpy.mean(arr)/100000.0)
+		print "Median fee for payers: " + str(numpy.median(arr)/100000.0)
+		print "Stdev of fee for payers: " + str(numpy.std(arr)/100000.0)
 	return "No data"
 
 if options.unconf:
@@ -145,8 +146,6 @@ if options.provider == 'blockchain':
 		if num_in > 0:
 			fees.append(fee)
 			size = tx['size']/1000.0
-			if size < 1.0:
-				size = 1.0
 			feesperkb.append([fee/size/100000.0,tx['size']])
 	
 		total_tx += 1
@@ -178,14 +177,12 @@ elif options.provider == 'bitcoind':
 	
 		fees.append(fee)
 		size = tx['size']/1000.0
-		if size < 1.0:
-			size = 1.0
 		feesperkb.append([fee/size/100000.0,tx['size']])
 	
 		total_tx += 1
 	
  
-print "Total transactions: " + str(total_tx) + " No fee: " + str(total_tx - has_fee)
+print "Total transactions: " + str(total_tx) + "  No fee: " + str(total_tx - has_fee)
 
 get_fee_stats(fees)
 
