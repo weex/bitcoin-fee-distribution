@@ -51,7 +51,8 @@ num_ins = {}
 fees = []
 feesperkb = []
 population_max_in_fraction_all = []
-
+thresh750 = 0.0
+thresh1000 = 0.0
 
 def get_stats( data ):
 	if len(data) > 0:
@@ -63,6 +64,8 @@ def get_fee_stats( data ):
 	if len(data) > 0:
 		arr = numpy.array( data )
 		print "All fees in mBTC"
+		print "Minimum fee/KB for 750KB block: " + str(thresh750)
+		print "Minimum fee/KB for 1MB block: " + str(thresh1000)
 		print "Minimum fee: " + str(numpy.min(arr)/100000.0)
 		print "Maximum fee: " + str(numpy.max(arr)/100000.0)
 		print "Average fee for payers: " + str(numpy.mean(arr)/100000.0)
@@ -184,7 +187,6 @@ elif options.provider == 'bitcoind':
  
 print "Total transactions: " + str(total_tx) + "  No fee: " + str(total_tx - has_fee)
 
-get_fee_stats(fees)
 
 # calculate minimum fee/kb for inclusion in 750KB and 1MB blocks
 # sort feesperkb by highest fees first, then create a cumulative sum of KBs at that fee or above
@@ -200,6 +202,12 @@ for i in feesperkb:
 	else:
 		bytesbyfee[i[0]] = bytessofar + i[1]
 	bytessofar += i[1]
+	if bytessofar > 750000 and thresh750 == 0:
+		thresh750 = i[0]
+	if bytessofar > 1000000 and thresh1000 == 0:
+		thresh1000 = i[0]
+
+get_fee_stats(fees)
 
 b = []
 f = []
