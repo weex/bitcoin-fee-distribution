@@ -53,6 +53,10 @@ feesperkb = []
 population_max_in_fraction_all = []
 thresh750 = 0.0
 thresh1000 = 0.0
+est1 = 0
+est6 = 0
+est12 = 0
+est24 = 0
 
 def get_stats( data ):
 	if len(data) > 0:
@@ -63,9 +67,20 @@ def get_stats( data ):
 def get_fee_stats( data ):
 	if len(data) > 0:
 		arr = numpy.array( data )
+		print ""
 		print "All fees in mBTC"
+		print "Bitcoinexchangerate.org Fee Estimates --------"
 		print "Minimum fee/KB for 750KB block: " + str(thresh750)
 		print "Minimum fee/KB for 1MB block: " + str(thresh1000)
+		print ""
+		print "Bitcoin Core Fee Estimates -------------------"
+		print "Blocks ---- mBTC/KB"
+		print "     1      " + str(float(est1)*1000.0)
+		print "     6      " + str(float(est6)*1000.0)
+		print "    12      " + str(float(est12)*1000.0)
+		print "    24      " + str(float(est24)*1000.0)
+		print ""
+		print "Statistics -----------------------------------"
 		print "Minimum fee: " + str(numpy.min(arr)/100000.0)
 		print "Maximum fee: " + str(numpy.max(arr)/100000.0)
 		print "Average fee for payers: " + str(numpy.mean(arr)/100000.0)
@@ -103,6 +118,11 @@ if options.unconf:
 		#txs = json.loads(raw)
 		data[u'tx'] = raw 
 		
+		est1 = d.get_estimatefee(1)
+		est6 = d.get_estimatefee(6)
+		est12 = d.get_estimatefee(12)
+		est24 = d.get_estimatefee(24)
+
 		# u'6d2b502eea0f8575d84eba792d811f5bb80dbeb92083111a4a8a5f500d75b788': 
 		# {
 		#  u'fee': 0.0001, 
