@@ -71,6 +71,13 @@ class Daemon :
 		io = p.communicate()[0]
 		return json.loads(io)
 
+	def get_estimatefee(self,blocks):
+		command = self.bitcoind_command[:]
+		command.extend(['estimatefee',str(blocks)])
+		p = Popen(command, stdout=PIPE)
+		io = p.communicate()[0]
+		return io.strip()
+
 	def send(self,address,amount):
 		command = self.bitcoind_command[:]
 		command.extend(['sendtoaddress',address,str(amount),'automated'])
