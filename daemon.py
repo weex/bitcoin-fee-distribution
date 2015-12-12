@@ -15,7 +15,7 @@ from settings import *
 # setup logging
 
 import logging
-logger = logging.getLogger('coindl-monitor')
+logger = logging.getLogger('monitor')
 hdlr = logging.FileHandler(BASE_PATH+'/monitor.log')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 hdlr.setFormatter(formatter)
@@ -25,8 +25,9 @@ logger.setLevel(logging.INFO)
 # Daemon - handles running bitcoind and getting results back from it
 #
 class Daemon :
-	#bitcoind_command  = ['/home/coindl/bin/bitcoind']
 	bitcoind_command  = [BITCOIND_COMMAND]
+	if len(DATADIR) > 0:
+		bitcoind_command.append("--datadir="+DATADIR)
 
 	def get_new_address(self):
 		command = self.bitcoind_command[:]
