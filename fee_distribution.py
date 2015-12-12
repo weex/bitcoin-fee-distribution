@@ -88,6 +88,27 @@ def get_fee_stats( data ):
 		print "Stdev of fee for payers: " + str(numpy.std(arr)/100000.0)
 	return "No data"
 
+def jsonify( data ):
+	if len(data) > 0:
+		arr = numpy.array( data )
+		j = {
+		 "result": "success",
+		 "min_for_750k": str(thresh750),
+		 "min_for_1000k": str(thresh1000),
+		 "core_est_1": str(float(est1)*1000.0),
+		 "core_est_6": str(float(est6)*1000.0),
+		 "core_est_12": str(float(est12)*1000.0),
+		 "core_est_24": str(float(est24)*1000.0),
+		 "mempool_min_fee": str(numpy.min(arr)/100000.0),
+		 "mempool_max fee": str(numpy.max(arr)/100000.0),
+		 "mempool_avg_nonzero_fee": str(numpy.mean(arr)/100000.0),
+		 "mempool_median_nonzero_fee": str(numpy.median(arr)/100000.0),
+		 "mempool_stdev_nonzero_fee": str(numpy.std(arr)/100000.0),
+		}
+	else:
+		j = {"result": "error"}
+	return json.dumps(j)
+
 if options.unconf:
 	raw = ''
 	txs = []
@@ -241,6 +262,11 @@ for i in sorted(bytesbyfee, reverse=True):
 fo.close()
 
 print "Total bytes: " + str(bytessofar)
+
+j = jsonify(fees)
+fj = open("bitcoin-fee-distribution.json", "w")
+fj.write(j)
+fj.close()
 
 x = numpy.array(f)
 y = numpy.array(b)
