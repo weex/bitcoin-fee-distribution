@@ -9,7 +9,7 @@ class Transaction(Base):
 	input_number = Column(Integer)
 	output_number = Column(Integer)
 	size = Column(Integer) # in bytes
-	fee = Column(Float) # in satoshis / byte
+	fee = Column(Integer) # in total satoshis
 	first_seen = Column(DateTime)
 	first_confirmed = Column(DateTime)
 	confirmation_time = Column(Integer)

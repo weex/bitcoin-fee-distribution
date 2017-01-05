@@ -35,9 +35,8 @@ def new_transactions_into_database():
 				t.transaction_id = transaction_id
 				t.first_seen = datetime.utcnow()
 				t.size = transaction['size']
-				# Save fee, convert from BTC to Satoshis, divide by size in bytes
-				# Yields satoshis / byte
-				t.fee = (transaction['fee'] * 100000000) / t.size
+				# Save fee, convert from BTC to Satoshis
+				t.fee = int(transaction['fee'] * 100000000)
 				session.add(t)
 				session.commit()
 

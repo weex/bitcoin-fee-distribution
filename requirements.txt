@@ -1,7 +1,6 @@
 cycler==0.10.0
 matplotlib==1.5.3
 numpy==1.11.3
-pycrypto==2.6
 pyparsing==2.1.10
 python-bitcoinrpc==1.0
 python-dateutil==2.6.0

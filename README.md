@@ -10,22 +10,21 @@ Collects data about confirmed informations as they are confirmed by streaming in
 Provides recommendations for fees if you want a transaction to be confirmed in X amount of minutes.
 
 ## Setup and usage instructions
-1) Ensure you have set txindex=1 in the bitcoin.conf file in your bitcoin core data directory. This is to make bitcoin core collect all necessary data about transactions the chain.
 
-2) Install all requirements - "pip install -r requirements.txt".
+1) Install all requirements - "pip install -r requirements.txt".
 
-3) Go into the FeeDistribution sub-folder.
+2) Go into the FeeDistribution sub-folder.
 
-4) Create a copy of the default_settings.py file, rename it to settings.py.
+3) Create a copy of the default_settings.py file, rename it to settings.py.
 
-5) Specifiy all values as explained by the comments throughout the file.
+4) Specifiy all values as explained by the comments throughout the file.
 
-6) Run "run.py help" and choose the command you want to run.
+5) Run "run.py help" and choose the command you want to run.
 
-7) Be aware that the "streamconfirmed" command is supposed to precede a prolonged period of data collection during which the program and bitcoin RPC server are to be left running.
+6) Be aware that the "streamconfirmed" command is supposed to precede a prolonged period of data collection during which the program and bitcoin RPC server are to be left running.
 
-8) Be also aware that to give maximally useful fee recommendations, as much data as possible should be used as determined by the time for which streamconfirmed has been run.
+7) Be also aware that to give maximally useful fee recommendations, as much data as possible should be used as determined by the time for which streamconfirmed has been run.
 
-9) Be also aware that frequently using the cleandb command will keep recommendations as accurate as possible by removing old transactions from the database.
+8) Be also aware that frequently using the cleandb command will keep recommendations as accurate as possible by removing old transactions from the database.
 
 Tested with Python 2.7.6
