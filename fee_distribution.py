@@ -68,24 +68,23 @@ def get_fee_stats( data ):
 	if len(data) > 0:
 		arr = numpy.array( data )
 		print ""
-		print "All fees in mBTC"
 		print "Bitcoinexchangerate.org Fee Estimates --------"
-		print "Minimum fee/KB for 750KB block: " + str(thresh750)
-		print "Minimum fee/KB for 1MB block: " + str(thresh1000)
+		print "Minimum fee for 1MB block: " + str(thresh1000) + ' sat/B'
+		print "Minimum fee for 750KB block: " + str(thresh750) + ' sat/B'
 		print ""
 		print "Bitcoin Core Fee Estimates -------------------"
-		print "Blocks ---- mBTC/KB"
-		print "     1      " + str(float(est1)*1000.0)
-		print "     6      " + str(float(est6)*1000.0)
-		print "    12      " + str(float(est12)*1000.0)
-		print "    24      " + str(float(est24)*1000.0)
+		print "Blocks ---- sat/B"
+		print "     1      " + str(float(est1)*100000.0)
+		print "     6      " + str(float(est6)*100000.0)
+		print "    12      " + str(float(est12)*100000.0)
+		print "    24      " + str(float(est24)*100000.0)
 		print ""
 		print "Statistics -----------------------------------"
-		print "Minimum fee: " + str(numpy.min(arr)/100000.0)
-		print "Maximum fee: " + str(numpy.max(arr)/100000.0)
-		print "Average fee for payers: " + str(numpy.mean(arr)/100000.0)
-		print "Median fee for payers: " + str(numpy.median(arr)/100000.0)
-		print "Stdev of fee for payers: " + str(numpy.std(arr)/100000.0)
+		print "Minimum fee: " + str(numpy.min(arr)/100000000.0) + ' BTC'
+		print "Maximum fee: " + str(numpy.max(arr)/100000000.0) + ' BTC'
+		print "Average fee for payers: " + str(numpy.mean(arr)/100000000.0) + ' BTC'
+		print "Median fee for payers: " + str(numpy.median(arr)/100000000.0) + ' BTC'
+		print "Stdev of fee for payers: " + str(numpy.std(arr)/100000000.0) + ' BTC'
 	return "No data"
 
 def jsonify( data ):
@@ -244,9 +243,9 @@ for i in feesperkb:
 		bytesbyfee[i[0]] = bytessofar + i[1]
 	bytessofar += i[1]
 	if bytessofar > 750000 and thresh750 == 0:
-		thresh750 = i[0]
+		thresh750 = i[0] * 100
 	if bytessofar > 1000000 and thresh1000 == 0:
-		thresh1000 = i[0]
+		thresh1000 = i[0] * 100
 
 get_fee_stats(fees)
 
@@ -257,7 +256,7 @@ fo = open("bitcoin-fee-distribution.csv", "w")
 fo.write('Unconfirmed Fee Distribution\n('+strftime("%a %d %b %Y %H:%M:%S", gmtime())+' UTC)\nmBTC/KB,KB\n')
 for i in sorted(bytesbyfee, reverse=True):
 	b.append(bytesbyfee[i]/1000.0)
-	f.append(i)
+	f.append(i * 100)
 	fo.write(str(i) + "," + str(bytesbyfee[i]/1000.0) + "\n")
 fo.close()
 
@@ -271,11 +270,13 @@ fj.close()
 x = numpy.array(f)
 y = numpy.array(b)
 plt.plot(x, y, c='blue')
-plt.xticks(numpy.arange(min(x), max(x), 0.2))
-plt.xlim(0, 2.0)
+plt.xticks(numpy.arange(min(x), max(x), 20))
+plt.xlim(0, 200)
+plt.axhline(y=1000, xmin=0, xmax=200, c="red", hold=None)
 plt.yscale('log')
+plt.grid()
 plt.title('Unconfirmed Fee Distribution\n'+strftime("%a %d %b %Y %H:%M:%S", gmtime())+' UTC')
 plt.ylabel('Transactions (KB)')
-plt.xlabel('Fee threshold (mBTC per KB)')
+plt.xlabel('Fee threshold (satoshis / byte)')
 plt.savefig('bitcoin-fee-distribution.png')
 
