@@ -16,7 +16,7 @@ def calculate_fee_factor():
 	# Yields average fee rate in satoshis / byte
 	# Multiply by average confirmation time
 	# Yields satoshis * seconds / byte
-	return (avg_fee_total / avg_size) * avg_convirmation_time
+	return (avg_fee_total / avg_size_total) * avg_convirmation_time
 
 factor = 0
 # If there are no transactions in the db, the factor stays at 0
