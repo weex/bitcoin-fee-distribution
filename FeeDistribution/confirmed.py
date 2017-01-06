@@ -4,6 +4,7 @@ from datetime import datetime
 from socket import error as socket_error
 from Queue import Queue
 from threading import Thread
+from httplib import BadStatusLine
 
 from .settings import RPC_USER, RPC_PASSWORD, RPC_PORT, REFRESH_PERIOD, RECONNECT_PERIOD
 from .transaction import Transaction
@@ -55,7 +56,12 @@ def monitor_confirmations():
 	global latest_block_height
 	global rpc_connection
 	global queue
-	block_height = rpc_connection.getblockcount()
+
+	try:
+		block_height = rpc_connection.getblockcount()
+	except BadStatusLine:
+		return
+
 	# If this block has already been checked, wait for the next block
 	if latest_block_height == block_height:
 		return
