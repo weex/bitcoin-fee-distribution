@@ -15,23 +15,33 @@ session = db.session()
 rpc_connection = AuthServiceProxy("http://{}:{}@127.0.0.1:{}".format(RPC_USER, RPC_PASSWORD, RPC_PORT))
 queue = Queue()
 latest_block_height = 0
+address_url = 'https://blockchain.info/tx/'
+DEBUG = True
+
+def print_debug(obj):
+    if DEBUG:
+        print str(obj)
 
 def refresh_connection():
 	"""Reinitializes the connection to the bitcoin RPC server."""
 	global rpc_connection
+	print_debug({'msg': 'start rpc_connection refresh'})
 	rpc_connection = AuthServiceProxy("http://{}:{}@127.0.0.1:{}".format(RPC_USER, RPC_PASSWORD, RPC_PORT))
-
+	print_debug({'msg': 'finished rpc_connection refresh'})
 	return
 
 def new_transactions_into_database():
 	"""Streams new transactions into the local database and specifies their first seen time"""
 	global rpc_connection
+	print_debug({'msg': 'start new_transactions_into_database'})
 	refresh_connection()
 	try:
 		for transaction_id, transaction in rpc_connection.getrawmempool(True).items():
+			#print_debug({'msg': 'processing mempool transaction', 'txid': transaction_id}) 
 			# Add transactions that are not yet in the database
 			# Specify current time as time they were first seen
 			if not session.query(Transaction).filter(Transaction.transaction_id == transaction_id).first():
+				print_debug({'msg': 'new transaction', 'txid': transaction_id})
 				t = Transaction()
 				t.transaction_id = transaction_id
 				t.first_seen = datetime.utcnow()
@@ -39,7 +49,7 @@ def new_transactions_into_database():
 				# Save fee, convert from BTC to Satoshis
 				t.fee = int(transaction['fee'] * 100000000)
 				session.add(t)
-				session.commit()
+		session.commit()
 
 	except (socket_error, JSONRPCException) as ex:
 		# Revive the RPC connection if there's a connection error
@@ -49,6 +59,7 @@ def new_transactions_into_database():
 		refresh_connection()
 		return new_transactions_into_database()
 
+	print_debug({'msg': 'finished new_transactions_into_database'})
 	return
 
 def monitor_confirmations():
@@ -71,8 +82,14 @@ def monitor_confirmations():
 	block = rpc_connection.getblock(block_hash)
 	for transaction in block['tx']:
 		# If the transaction is found in the database and unconfirmed, confirm it
-		transaction_db = session.query(Transaction).filter(Transaction.transaction_id == transaction).filter(Transaction.first_confirmed == None).first()
+		transaction_db = session.query(Transaction).filter(Transaction.transaction_id == transaction).\
+                                                            filter(Transaction.first_confirmed == None).first()
 		if transaction_db:
+                        print_debug({'msg': 'Transaction confirmed.',
+                                     'txid': transaction,
+				     'block_height': block_height,
+                                     'block_hash': block_hash,
+                                     'txurl': address_url +  transaction})
 			transaction_db.block_height = block_height
 			transaction_db.block_hash = block_hash
 			transaction_db.first_confirmed = datetime.utcnow()
@@ -89,6 +106,7 @@ def update_transactions():
 	session = db.session()
 	try:
 		while True:
+			# queue comes from monitor connections
 			transaction_id = queue.get()
 			transaction_db = session.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
 			transaction = rpc_connection.getrawtransaction(transaction_id, 1)
@@ -107,6 +125,7 @@ def update_transactions():
 def stream():
 	"""Streams new transactions into the local database and
 	Adds information as they are confirmed"""
+	global latest_block_height
 	try:
 		updater = Thread(target=update_transactions)
 		updater.daemon = True
@@ -114,19 +133,26 @@ def stream():
 		# If the added transactions were lost track of before confirmation discard
 		# By setting the fee to -1
 		# As the confirmation time may be unreliable and skew results toward higher fees
-		post_process_transactions = session.query(Transaction).filter(Transaction.first_confirmed == None).filter(Transaction.confirmation_time == None).all()
+		post_process_transactions = session.query(Transaction).filter(Transaction.first_confirmed == None
+								     ).filter(Transaction.confirmation_time == None).all()
 		for transaction in post_process_transactions:
 			transaction.fee = -1
-			session.commit()
+                        print_debug({'msg': 'Transaction confirmed during gap.',
+				     'txid': transaction.transaction_id,
+				     'txurl': address_url +transaction.transaction_id})
 
+		session.commit()
 		# If the post-processing was interrupted in some way, make sure it is carried out on the next start
-		post_process_transactions = session.query(Transaction).filter(Transaction.first_confirmed != None).filter(Transaction.confirmation_time == None).all()
+		post_process_transactions = session.query(Transaction).filter(Transaction.first_confirmed != None
+								     ).filter(Transaction.confirmation_time == None).all()
 		for transaction in post_process_transactions:
 			queue.put(transaction.transaction_id)
 
 		while True:
+			print_debug({'msg': 'start cycle', 'latest_block_height': latest_block_height})
 			new_transactions_into_database()
 			monitor_confirmations()
+			print_debug({'msg': 'end cycle', 'latest_block_height': latest_block_height})
 			sleep(REFRESH_PERIOD)
 
 	except KeyboardInterrupt:

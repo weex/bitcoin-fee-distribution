@@ -5,7 +5,7 @@ Base = declarative_base()
 class Transaction(Base):
 	__tablename__ = 'transactions'
 	id = Column(Integer, primary_key=True)
-	transaction_id = Column(String) # in hex
+	transaction_id = Column(String, index=True) # in hex
 	input_number = Column(Integer)
 	output_number = Column(Integer)
 	size = Column(Integer) # in bytes
