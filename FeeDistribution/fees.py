@@ -8,9 +8,15 @@ session = db.session()
 def calculate_fee_factor():
 	"""Calculates a factor which, multiplied with a certain amount of time
 	Yields a recommended fee rate in satoshis / byte"""
-	avg_fee_total = session.query(func.avg(Transaction.fee)).filter(Transaction.fee != None).filter(Transaction.fee != -1).filter(Transaction.confirmation_time != None).scalar()
-	avg_size_total = session.query(func.avg(Transaction.size)).filter(Transaction.fee != None).filter(Transaction.fee != -1).filter(Transaction.confirmation_time != None).scalar()
-	avg_convirmation_time = session.query(func.avg(Transaction.confirmation_time)).filter(Transaction.fee != -1).filter(Transaction.fee != None).filter(Transaction.confirmation_time != None).scalar()
+	avg_fee_total = session.query(func.avg(Transaction.fee)).filter(Transaction.fee != None,
+                                                                        Transaction.fee != -1,
+                                                                        Transaction.confirmation_time != None).scalar()
+	avg_size_total = session.query(func.avg(Transaction.size)).filter(Transaction.fee != None,
+                                                                          Transaction.fee != -1,
+                                                                          Transaction.confirmation_time != None).scalar()
+	avg_convirmation_time = session.query(func.avg(Transaction.confirmation_time)).filter(Transaction.fee != -1,
+                                                                                              Transaction.fee != None,
+                                                                                              Transaction.confirmation_time != None).scalar()
 
 	# Divide average transaction fee by average transaction size
 	# Yields average fee rate in satoshis / byte
@@ -22,7 +28,6 @@ factor = 0
 # If there are no transactions in the db, the factor stays at 0
 try:
 	factor = calculate_fee_factor() # in satoshis / byte * second
-
 except:
 	pass
 
