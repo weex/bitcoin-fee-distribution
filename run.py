@@ -1,6 +1,6 @@
 # Central script to choose what to do
 import sys
-from FeeDistribution import confirmed, unconfirmed, fees, database
+from FeeDistribution import confirmed, unconfirmed, fees, database, export
 
 def help():
 	print('\ncommand - description\n')
@@ -26,6 +26,14 @@ options = {
 	'recommendfee': {
 		'description': 'Print out a recommende fees for a transaction to be confirmed in the time specified: python run.py recommendfee [MINUTES]',
 		'functionality': fees.recommended_fee
+	},
+	'exportblocks': {
+		'description': 'Get block numbers and observed times',
+		'functionality': export.get_blocks
+	},
+	'exportconfirms': {
+		'description': '',
+		'functionality': export.confirmation_times
 	},
 	'unconfirmedinfo': {
 		'description': 'Print out information about currently unconfirmed transactions, using either \'bitcoind\' or \'blockchain\' as provider: python run.py unconfirmedinfo [PROVIDER]',
