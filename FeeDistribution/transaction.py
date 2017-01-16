@@ -11,7 +11,7 @@ class Transaction(Base):
 	size = Column(Integer) # in bytes
 	fee = Column(Integer) # in total satoshis
 	first_seen = Column(DateTime)
-	frst_seen_block = Column(Integer)
+	first_seen_block = Column(Integer)
 	first_confirmed = Column(DateTime)
 	confirmation_time = Column(Integer)
 	block_height = Column(Integer)
