@@ -24,9 +24,12 @@ def confirmation_times():
  
     sql = text("""select (julianday(first_confirmed) - julianday(first_seen)) * 86400 as conf_time,
             fee/size as fee_rate, transaction_id, block_height, fee, size,
-                        strftime('%s',first_seen) as fs_timestamp
+            first_seen_block,
+            (block_height - first_seen_block) as conf_block
             from transactions 
-            where first_confirmed is not null and fee > -1;""")
+            where first_confirmed is not null and
+                  first_seen_block != 0 and 
+                  fee > -1;""")
     result = db.engine.execute(sql)
     columns = {}
     out = []
@@ -34,29 +37,13 @@ def confirmation_times():
         if not columns:
             columns = tx.keys()
         row = dict(zip(columns, tx.values()))
-        block_zero = None
-        for b in blocks:
-            (time, bh) = b
-
-            if bh is None:
-                bh = 1
-
-            if time is None:
-                continue
-
-            # if this block was found after this transaction was seen
-            if int(time) > int(row['fs_timestamp']) < int(time):
-                block_zero = bh - 1
-                break
-
-        if block_zero is None:
-            continue
-        row['conf_blocks'] = row['block_height'] - block_zero
         out.append(row)
 
-    columns.append('conf_blocks')    
     writer = csv.DictWriter(open('transaction_info.csv', 'w'),
                 fieldnames=columns)
     writer.writeheader()
     for row in out:
         writer.writerow(row)
+
+#def fee_estimates()
+#    sql = text("select (block_height - first_seen_block) as conf_block, avg(fee/size) from transactions where block_height is not null and block_height != 0 and first_seen_block != 0 group by conf_block;"	
