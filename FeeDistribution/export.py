@@ -20,7 +20,7 @@ def get_blocks():
 	return out
 
 def confirmation_times():
-        blocks = get_blocks()
+    blocks = get_blocks()
  
 	sql = text("""select (julianday(first_confirmed) - julianday(first_seen)) * 86400 as conf_time,
 			fee/size as fee_rate, transaction_id, block_height, fee, size,

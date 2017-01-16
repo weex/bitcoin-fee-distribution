@@ -48,7 +48,8 @@ def new_transactions_into_database():
 				t.size = transaction['size']
 				# Save fee, convert from BTC to Satoshis
 				t.fee = int(transaction['fee'] * 100000000)
-				session.add(t)
+                t.first_seen_block = latest_block_height
+                session.add(t)
 		session.commit()
 
 	except (socket_error, JSONRPCException) as ex:
@@ -96,7 +97,6 @@ def monitor_confirmations():
 			session.commit()
 			queue.put(transaction)
 
-
 	return
 
 def update_transactions():
@@ -112,7 +112,8 @@ def update_transactions():
 			transaction = rpc_connection.getrawtransaction(transaction_id, 1)
 			transaction_db.input_number = len(transaction['vin'])
 			transaction_db.output_number = len(transaction['vout'])
-			# Save time it took to confirm the transaction in seconds
+
+            # Save time it took to confirm the transaction in seconds
 			confirmation_time = transaction_db.first_confirmed - transaction_db.first_seen
 			transaction_db.confirmation_time = confirmation_time.total_seconds()
 
@@ -146,7 +147,8 @@ def stream():
 		post_process_transactions = session.query(Transaction).filter(Transaction.first_confirmed != None
 								     ).filter(Transaction.confirmation_time == None).all()
 		for transaction in post_process_transactions:
-			queue.put(transaction.transaction_id)
+            # send for processing by update_transactions()
+            queue.put(transaction.transaction_id)
 
 		while True:
 			print_debug({'msg': 'start cycle', 'latest_block_height': latest_block_height})
@@ -157,3 +159,5 @@ def stream():
 
 	except KeyboardInterrupt:
 		return
+
+# vim: set tabstop=8:softtabstop=8:shiftwidth=8:noexpandtab
