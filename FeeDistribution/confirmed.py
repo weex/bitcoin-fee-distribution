@@ -1,5 +1,5 @@
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
-from time import sleep
+from time import sleep, time
 from datetime import datetime
 from socket import error as socket_error
 from Queue import Queue
@@ -8,7 +8,7 @@ from httplib import BadStatusLine
 
 from .settings import RPC_USER, RPC_PASSWORD, RPC_PORT, REFRESH_PERIOD, RECONNECT_PERIOD
 from .transaction import Transaction
-from .database import database as db
+from .database import database as db, clean
 
 session = db.session()
 
@@ -138,12 +138,15 @@ def stream():
                                      ).filter(Transaction.confirmation_time == None).all()
         for transaction in post_process_transactions:
             transaction.fee = -1
-            print_debug({'msg': 'Transaction confirmed during gap.',
+            print_debug({'msg': 'Transaction appeared during gap.',
                          'txid': transaction.transaction_id,
                          'txurl': address_url +transaction.transaction_id})
 
         session.commit()
+
+
         # If the post-processing was interrupted in some way, make sure it is carried out on the next start
+        print_debug({'msg': 'start post-processing', 'latest_block_height': latest_block_height})
         post_process_transactions = session.query(Transaction).filter(Transaction.first_confirmed != None
                                      ).filter(Transaction.confirmation_time == None).all()
         for transaction in post_process_transactions:
@@ -152,10 +155,13 @@ def stream():
 
         while True:
             print_debug({'msg': 'start cycle', 'latest_block_height': latest_block_height})
+            start = time() 
+            #clean()
+            #print_debug({'msg': 'done cleaning', 'elapsed_time': time() - start})
             new_transactions_into_database()
             monitor_confirmations()
-            print_debug({'msg': 'end cycle', 'latest_block_height': latest_block_height})
-            sleep(REFRESH_PERIOD)
+            print_debug({'msg': 'end cycle', 'latest_block_height': latest_block_height, 'elapsed_time': time() - start})
+            sleep(max(0,REFRESH_PERIOD - (time() - start)))
 
     except KeyboardInterrupt:
         return
