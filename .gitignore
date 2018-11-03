@@ -62,3 +62,7 @@ target/
 
 # Configuration
 settings.py
+
+# dsterry added
+*.json
+*.txt
